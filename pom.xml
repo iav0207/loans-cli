@@ -21,6 +21,7 @@
         <mockito.version>2.13.0</mockito.version>
         <hamcrest.version>1.3</hamcrest.version>
         <commons.lang3.version>3.7</commons.lang3.version>
+        <guava.version>24.0-jre</guava.version>
         <jsr305.version>3.0.2</jsr305.version>
         <mainClass>task.loans.cli.LoansCLI</mainClass>
     </properties>
@@ -31,6 +32,12 @@
             <groupId>com.google.code.findbugs</groupId>
             <artifactId>jsr305</artifactId>
             <version>${jsr305.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
         </dependency>
 
         <dependency>
