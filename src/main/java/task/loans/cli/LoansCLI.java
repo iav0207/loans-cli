@@ -8,6 +8,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import task.loans.calc.LoanCalculator;
+import task.loans.calc.Result;
 import task.loans.csv.CsvInputReader;
 
 /**
@@ -41,7 +42,8 @@ public class LoansCLI {
     private void runSafely() {
         CsvInputReader reader = new CsvInputReader(params.skipLine, params.customSeparator);
         LoanCalculator calculator = new LoanCalculator(reader.read(new File(params.marketFile)));
-        logger.info(calculator.calculate(new BigDecimal(params.loanAmount)).toString());
+        Result result = calculator.calculate(new BigDecimal(params.loanAmount));
+        logger.info(result.toString());
     }
 
 }

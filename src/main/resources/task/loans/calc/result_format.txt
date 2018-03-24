@@ -1,0 +1,4 @@
+Requested amount: £%.0f%n
+Rate: %.1f%%%n
+Monthly repayment: £%.2f%n
+Total repayment: £%.2f

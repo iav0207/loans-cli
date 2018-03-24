@@ -17,6 +17,6 @@ public class LoanCalculator {
     }
 
     public Result calculate(BigDecimal lendingAmount) {
-        return new Result();
+        return Result.lendingFailed();
     }
 }
