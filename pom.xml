@@ -24,6 +24,7 @@
         <commons.lang3.version>3.7</commons.lang3.version>
         <guava.version>24.0-jre</guava.version>
         <jsr305.version>3.0.2</jsr305.version>
+        <slf4j.version>1.8.0-beta0</slf4j.version>
         <mainClass>task.loans.cli.LoansCLI</mainClass>
     </properties>
 
@@ -50,6 +51,12 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>${commons.lang3.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>${slf4j.version}</version>
         </dependency>
 
         <dependency>
