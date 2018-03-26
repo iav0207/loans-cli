@@ -26,7 +26,7 @@ then the system should inform the borrower that it is not possible to provide a 
 ### Build & Run
 
 1. Build: `mvn clean install`
-1. Run: `java -jar target/loans-1.0-SNAPSHOT.jar [args]` or `run.sh [args]`
+1. Run: `java -jar target/loans-1.0-SNAPSHOT.jar [args]` or `./run.sh [args]`
 
 ### Command Line Interface
 

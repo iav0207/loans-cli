@@ -7,4 +7,4 @@ cache:
 script:
   - mvn clean install
   - mvn failsafe:integration-test
-  - run.sh example/market.csv -l -a 1000
+  - ./run.sh example/market.csv -l -a 1000
