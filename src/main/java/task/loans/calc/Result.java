@@ -18,11 +18,9 @@ import static java.util.Objects.requireNonNull;
 @ParametersAreNonnullByDefault
 public class Result {
 
+    private static final Result FAILED = new Result("Lending for the specified amount is currently unavailable");
+
     private static final String FORMAT = readFormatFromResource("result_format.txt");
-
-    private static final String FAIL_MESSAGE = "Lending for the specified amount is currently unavailable";
-
-    private static final Result FAILED = new Result();
 
     final BigDecimal requestedAmount;
     final BigDecimal rate;
@@ -40,20 +38,21 @@ public class Result {
         this.monthlyRepayment = requireNonNull(builder.monthlyRepayment);
         this.totalRepayment = requireNonNull(builder.totalRepayment);
 
-        this.stringRepresentation = format(FORMAT, requestedAmount, rate, monthlyRepayment, totalRepayment);
+        this.stringRepresentation = format(FORMAT, requestedAmount, rate.movePointRight(2),
+                monthlyRepayment, totalRepayment);
     }
 
     /**
      * Result: lending failed.
      */
-    private Result() {
+    private Result(String message) {
         BigDecimal minusOne = BigDecimal.ONE.negate();
         this.requestedAmount = minusOne;
         this.rate = minusOne;
         this.monthlyRepayment = minusOne;
         this.totalRepayment = minusOne;
 
-        this.stringRepresentation = FAIL_MESSAGE;
+        this.stringRepresentation = message;
     }
 
     /**
@@ -66,7 +65,7 @@ public class Result {
     /**
      * Result: lending failed.
      */
-    static Result lendingFailed() {
+    public static Result loanUnavailable() {
         return FAILED;
     }
 

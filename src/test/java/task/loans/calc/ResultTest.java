@@ -28,8 +28,8 @@ public class ResultTest {
     public static Iterator<Object> results() {
         return stream(new String[][]{
 
-                {"1000", "7.0", "30.78", "1108.10"},
-                {"1000.0", "7", "030.7800", "1108.1"},
+                {"1000", "0.07", "30.78", "1108.10"},
+                {"1000.0", "0.070", "030.7800", "1108.1"},
 
         }).map(arr -> Result.builder()
                 .requestedAmount(dec(arr[0]))
