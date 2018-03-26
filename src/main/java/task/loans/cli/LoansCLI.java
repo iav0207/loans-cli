@@ -1,14 +1,17 @@
 package task.loans.cli;
 
 import java.io.File;
-import java.math.BigDecimal;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import task.loans.calc.LoanCalculator;
-import task.loans.csv.CsvInputReader;
+import task.loans.core.Loan;
+import task.loans.core.LoanCalculator;
+import task.loans.io.CsvInputReader;
+import task.loans.io.ResultFormatter;
+
+import static task.loans.core.Money.decimal;
 
 /**
  * Command line interface to loans repayment calculation.
@@ -37,7 +40,8 @@ public class LoansCLI {
     private void run() {
         CsvInputReader reader = new CsvInputReader(params.skipLine, params.customSeparator);
         LoanCalculator calculator = new LoanCalculator(reader.read(new File(params.marketFile)));
-        logger.info("{}", calculator.calculate(new BigDecimal(params.loanAmount)));
+        Loan result = calculator.calculate(decimal(params.loanAmount));
+        logger.info("{}", new ResultFormatter().format(result));
     }
 
 }

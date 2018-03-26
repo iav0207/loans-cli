@@ -1,8 +1,7 @@
-package task.loans.csv;
+package task.loans.io;
 
 import java.io.File;
 import java.io.FileReader;
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,12 +12,14 @@ import au.com.bytecode.opencsv.CSVParser;
 import au.com.bytecode.opencsv.CSVReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import task.loans.model.LendingOffer;
+import task.loans.core.LendingOffer;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
+import static task.loans.core.Money.decimal;
+import static task.loans.core.Money.rate;
 
 /**
  * Reader extracting market data from CSV file.
@@ -84,7 +85,7 @@ public class CsvInputReader {
         checkArgument(row.length == 3, "Invalid row length. Row: %s",
                 stream(row).collect(joining(",", "[", "]")));
 
-        return onExceptionRethrow(() -> new LendingOffer(row[0], new BigDecimal(row[1]), new BigDecimal(row[2])),
+        return onExceptionRethrow(() -> new LendingOffer(row[0], rate(row[1]), decimal(row[2])),
                 "Improper input data format");
     }
 

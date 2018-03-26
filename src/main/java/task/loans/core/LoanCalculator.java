@@ -1,7 +1,6 @@
-package task.loans.calc;
+package task.loans.core;
 
 import java.math.BigDecimal;
-import java.math.MathContext;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,7 +11,12 @@ import javax.util.streamex.EntryStream;
 import javax.util.streamex.StreamEx;
 
 import com.google.common.collect.ImmutableSortedMap;
-import task.loans.model.LendingOffer;
+
+import static task.loans.core.Money.CENT_SCALE;
+import static task.loans.core.Money.MONEY_CONTEXT;
+import static task.loans.core.Money.decimal;
+import static task.loans.core.Money.numericallyEqual;
+import static task.loans.core.Money.roundingMode;
 
 @ParametersAreNonnullByDefault
 public class LoanCalculator {
@@ -23,12 +27,6 @@ public class LoanCalculator {
      * Number of monthly payments.
      */
     private static final int REPAYMENTS = 36;
-
-    /**
-     * Default decimal arithmetic standard for monetary calculations.
-     * Rounding mode: {@link java.math.RoundingMode#HALF_EVEN}.
-     */
-    private static final MathContext MONEY_CONTEXT = MathContext.DECIMAL128;
 
     private final SortedMap<BigDecimal, BigDecimal> offers;
     private final BigDecimal totalSupply;
@@ -42,9 +40,9 @@ public class LoanCalculator {
         this.totalSupply = offers.stream().map(LendingOffer::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    public Result calculate(BigDecimal lendingAmount) {
+    public Loan calculate(BigDecimal lendingAmount) {
         if (totalSupply.compareTo(lendingAmount) < 0) {
-            return Result.loanUnavailable();
+            return Loan.unavailable(lendingAmount);
         }
         return new InternalCalculator(lendingAmount).getResult();
     }
@@ -58,16 +56,21 @@ public class LoanCalculator {
             this.loans = createLoansMap(requestedAmount);
         }
 
-        Result getResult() {
+        Loan getResult() {
             BigDecimal monthlyRepayment = getMonthlyRepayment();
-            return Result.builder()
+            return Loan.builder()
                     .requestedAmount(requestedAmount)
                     .monthlyRepayment(monthlyRepayment)
-                    .totalRepayment(monthlyRepayment.multiply(new BigDecimal(REPAYMENTS)))
+                    .totalRepayment(monthlyRepayment.multiply(decimal(REPAYMENTS)))
                     .rate(calculateEffectiveRate())
                     .build();
         }
 
+        /**
+         * Build compound loan table.
+         *
+         * @return Map: rate -> amount.
+         */
         private Map<BigDecimal, BigDecimal> createLoansMap(BigDecimal requestedAmount) {
             Map<BigDecimal, BigDecimal> map = new HashMap<>();
             BigDecimal need = requestedAmount;
@@ -88,32 +91,30 @@ public class LoanCalculator {
                     .mapKeys(this::toMonthlyInterestRate)
                     .invert()
                     .mapKeyValue(this::calculateMonthlyRepayment)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    .reduce(BigDecimal.ZERO, BigDecimal::add)
+                    .setScale(Money.CENT_SCALE, Money.roundingMode());
         }
 
         private BigDecimal calculateMonthlyRepayment(BigDecimal principal, BigDecimal monthlyInterestRate) {
+            if (monthlyInterestRate.compareTo(BigDecimal.ZERO) == 0) {
+                return principal.divide(decimal(REPAYMENTS), MONEY_CONTEXT);
+            }
             BigDecimal r = BigDecimal.ONE.add(monthlyInterestRate).pow(REPAYMENTS);
             return monthlyInterestRate.multiply(principal).multiply(r)
-                    .divide(r.subtract(BigDecimal.ONE), MONEY_CONTEXT);
+                    .divide(r.subtract(BigDecimal.ONE), MONEY_CONTEXT)
+                    .setScale(CENT_SCALE, roundingMode());
         }
 
         private BigDecimal calculateEffectiveRate() {
             BigDecimal weightedSum = EntryStream.of(loans)
                     .mapKeyValue(BigDecimal::multiply)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
-            return weightedSum.divide(requestedAmount, MONEY_CONTEXT);
+            return weightedSum.divide(requestedAmount, roundingMode())
+                    .setScale(Money.RATE_SCALE, roundingMode());
         }
 
         private BigDecimal toMonthlyInterestRate(BigDecimal annualInterestRate) {
-            return annualInterestRate.divide(new BigDecimal(MONTHS_IN_YEAR), MONEY_CONTEXT);
-        }
-
-        /**
-         * @return {@code true} if the numbers are equal disregarding to {@link BigDecimal#scale()},
-         * {@code false} otherwise.
-         */
-        private boolean numericallyEqual(BigDecimal a, BigDecimal b) {
-            return a.compareTo(b) == 0;
+            return annualInterestRate.divide(decimal(MONTHS_IN_YEAR), MONEY_CONTEXT);
         }
     }
 }

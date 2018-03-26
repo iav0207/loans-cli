@@ -1,4 +1,4 @@
-package task.loans.model;
+package task.loans.core;
 
 import java.math.BigDecimal;
 import java.util.Objects;

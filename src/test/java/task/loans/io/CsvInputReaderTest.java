@@ -1,4 +1,4 @@
-package task.loans.csv;
+package task.loans.io;
 
 import java.io.File;
 import java.util.Iterator;
@@ -9,7 +9,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-import task.loans.model.LendingOffer;
+import task.loans.core.LendingOffer;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;

@@ -45,8 +45,8 @@ public class ParserTest {
 
     @Test
     public void parse_positive() {
-        Params params = parser.parse("file.csv", "-a", "3500");
-        assertThat(params.marketFile, equalTo("file.csv"));
+        Params params = parser.parse("file.io", "-a", "3500");
+        assertThat(params.marketFile, equalTo("file.io"));
         assertThat(params.loanAmount, equalTo(3_500));
         assertThat(params.help, is(false));
         assertThat(params.skipLine, is(false));
@@ -61,10 +61,10 @@ public class ParserTest {
     @DataProvider(name= "validArgs")
     public static Object[] validArgs() {
         return Stream.of(
-                "file.csv -a 4000",
+                "file.io -a 4000",
                 "abcdef --amount 1000",
-                "file.csv -l --amount 3000",
-                "file.csv --amount 5900 --sep = --line-skip"
+                "file.io -l --amount 3000",
+                "file.io --amount 5900 --sep = --line-skip"
                 ).map(s -> s.split("\\s+"))
                 .toArray();
     }
