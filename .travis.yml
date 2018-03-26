@@ -4,6 +4,8 @@ install: true
 cache:
   directories:
     - $HOME/.m2
+before_install:
+  - chmod +x run.sh
 script:
   - mvn clean install
   - mvn failsafe:integration-test
