@@ -1,0 +1,10 @@
+language: java
+jdk: oraclejdk8
+install: true
+cache:
+  directories:
+    - $HOME/.m2
+script:
+  - mvn clean install
+  - mvn failsafe:integration-test
+  - run.sh example/market.csv -l -a 1000
