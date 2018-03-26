@@ -10,12 +10,10 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import task.loans.core.Loan;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.isEmptyString;
-import static task.loans.core.Money.decimal;
 
 @ParametersAreNonnullByDefault
 public class LoansIT {
@@ -42,7 +40,7 @@ public class LoansIT {
                 "^\\s*Requested amount:.+Rate:.+Monthly repayment:.+Total repayment:.+$",
                 Pattern.DOTALL);
 
-        LoansCLI.main("example/market.io", "-a", "1000", "-l");
+        LoansCLI.main("example/market.csv", "-a", "1000", "-l");
         String output = out.toString();
 
         assertThat(err.toString(), isEmptyString());
@@ -53,12 +51,13 @@ public class LoansIT {
 
     @Test
     public void endToEndSmokeTest_negative() {
-        LoansCLI.main("example/market.io", "-a", "15000", "-l");
+        LoansCLI.main("example/market.csv", "-a", "15000", "-l");
         String output = out.toString();
+        String expected = "Lending for the specified amount is currently unavailable";
 
         assertThat(err.toString(), isEmptyString());
 
-        assertThat(output, containsString(Loan.unavailable(decimal(15_000)).toString()));
+        assertThat(output, containsString(expected));
     }
 
     @AfterMethod
