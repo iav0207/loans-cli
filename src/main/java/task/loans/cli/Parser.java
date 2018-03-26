@@ -18,7 +18,7 @@ class Parser {
         this.programName = programName;
     }
 
-    Params parse(String[] args) {
+    Params parse(String... args) {
         Params params = new Params();
         JCommander commander = JCommander.newBuilder()
                 .programName(programName)

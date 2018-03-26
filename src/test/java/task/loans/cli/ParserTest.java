@@ -43,7 +43,7 @@ public class ParserTest {
 
     @Test
     public void parse_positive() {
-        Params params = parser.parse(args("file.csv", "-a", "3500"));
+        Params params = parser.parse("file.csv", "-a", "3500");
         assertThat(params.marketFile, equalTo("file.csv"));
         assertThat(params.loanAmount, equalTo(3_500));
         assertThat(params.help, is(false));
@@ -53,40 +53,36 @@ public class ParserTest {
 
     @Test
     public void parse_lineSkipShort() {
-        Params params = parser.parse(args("a", "-a", "100", "-l"));
+        Params params = parser.parse("a", "-a", "100", "-l");
         assertThat(params.skipLine, is(true));
     }
 
     @Test
     public void parse_lineSkipLong() {
-        Params params = parser.parse(args("a", "-a", "100", "--line-skip"));
+        Params params = parser.parse("a", "-a", "100", "--line-skip");
         assertThat(params.skipLine, is(true));
     }
 
     @Test
     public void parse_separatorShort() {
-        Params params = parser.parse(args("bga", "-s", "=", "-a", "200"));
+        Params params = parser.parse("bga", "-s", "=", "-a", "200");
         assertThat(params.customSeparator, equalTo('='));
     }
 
     @Test
     public void parse_separatorLong() {
-        Params params = parser.parse(args("bga", "--sep", "=", "-a", "200"));
+        Params params = parser.parse("bga", "--sep", "=", "-a", "200");
         assertThat(params.customSeparator, equalTo('='));
     }
 
     @Test(expectedExceptions = ExitException.class)
     public void parse_helpEnabled_exits() {
-        parser.parse(args("bga", "--sep", "=", "-h", "-a", "200"));
+        parser.parse("bga", "--sep", "=", "-h", "-a", "200");
     }
 
     @Test(expectedExceptions = ExitException.class)
     public void parse_invalidArgs_exits() {
-        parser.parse(args("555"));
-    }
-
-    private static String[] args(String... args) {
-        return args;
+        parser.parse("555");
     }
 
 }
