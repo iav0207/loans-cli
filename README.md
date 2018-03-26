@@ -1,5 +1,6 @@
 Loan Repayments Calculator
 --
+[![Build Status](https://travis-ci.org/iav0207/loans-cli.svg?branch=master)](https://travis-ci.org/iav0207/loans-cli)
 
 CLI application for calculating effective rate and repayment amount
 for compound loan, i.e. borrowed from a number of lenders under different rates.
