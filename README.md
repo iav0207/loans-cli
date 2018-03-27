@@ -43,7 +43,7 @@ Usage: task.loans.cli.LoansCLI [options] Input file (CSV)
 ```
 For example to calculate repayments for £2000 loan using example CSV file execute
 
-```loans.sh example/market.csv -l -a 2000```
+```run.sh example/market.csv -l -a 2000```
 
 `-l` (line skip option) is used since the file contains CSV header row
 
