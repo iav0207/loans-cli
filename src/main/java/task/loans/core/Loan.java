@@ -34,6 +34,13 @@ public class Loan {
         this.totalRepayment = requireNonNull(builder.totalRepayment);
     }
 
+    /**
+     * Create instance representing a situation when no loan of the specified value can be provided.
+     *
+     * @param requestedAmount amount of loan requested by a borrower
+     * @return An instance holding the requested loan amount and the special value
+     * of {@link #MINUS_ONE} for the rest of the fields, i.e. repayments and rate.
+     */
     public static Loan unavailable(BigDecimal requestedAmount) {
         return builder()
                 .requestedAmount(requestedAmount)
