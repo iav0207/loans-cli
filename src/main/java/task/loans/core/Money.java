@@ -25,8 +25,6 @@ public class Money {
     static final int CENT_SCALE = 2;
     static final int RATE_SCALE = 3;
 
-    private static final BigDecimal EPSILON = BigDecimal.valueOf(1e-3);
-
     /**
      * Factory method for creating {@link BigDecimal} values in one money context.
      *
@@ -70,17 +68,5 @@ public class Money {
      */
     static boolean numericallyEqual(BigDecimal a, BigDecimal b) {
         return a.compareTo(b) == 0;
-    }
-
-    /**
-     * Epsilon: {@link #EPSILON}
-     */
-    static boolean approximatelyEqual(BigDecimal a, BigDecimal b) {
-        BigDecimal absSum = a.abs().add(b.abs());
-        if (numericallyEqual(absSum, BigDecimal.ZERO)) {
-            return true;
-        }
-        BigDecimal delta = a.subtract(b).abs().divide(absSum.multiply(decimal(2)), roundingMode());
-        return delta.compareTo(EPSILON) < 0;
     }
 }

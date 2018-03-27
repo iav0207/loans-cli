@@ -12,6 +12,7 @@ import javax.util.streamex.StreamEx;
 
 import com.google.common.collect.ImmutableSortedMap;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static task.loans.core.Money.CENT_SCALE;
 import static task.loans.core.Money.MONEY_CONTEXT;
 import static task.loans.core.Money.decimal;
@@ -31,6 +32,12 @@ public class LoanCalculator {
     private final SortedMap<BigDecimal, BigDecimal> offers;
     private final BigDecimal totalSupply;
 
+    /**
+     * Create an immutable instance and prepare data structure for further calculations.
+     * Time complexity: O(n*log(n)).
+     *
+     * @param offers list of offers from the lenders, i.e. market data.
+     */
     public LoanCalculator(List<LendingOffer> offers) {
         SortedMap<BigDecimal, BigDecimal> map = StreamEx.of(offers)
                 .mapToEntry(LendingOffer::getRate, LendingOffer::getAmount)
@@ -40,11 +47,21 @@ public class LoanCalculator {
         this.totalSupply = offers.stream().map(LendingOffer::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    public Loan calculate(BigDecimal lendingAmount) {
-        if (totalSupply.compareTo(lendingAmount) < 0) {
-            return Loan.unavailable(lendingAmount);
+    /**
+     * Calculate compound loan of the specified amount satisfied by the offers.
+     * <p>
+     * The loan returned will have as low a rate as is possible.
+     *
+     * @param requestedAmount total amount of loan requested, non-negative value
+     * @return {@link Loan} instance with calculated compound rate and repayment amounts,
+     * or {@link Loan#unavailable} – if the request cannot be satisfied by the market.
+     */
+    public Loan calculate(BigDecimal requestedAmount) {
+        checkArgument(requestedAmount.compareTo(BigDecimal.ZERO) < 0, "Loan amount must be non-negative");
+        if (totalSupply.compareTo(requestedAmount) < 0) {
+            return Loan.unavailable(requestedAmount);
         }
-        return new InternalCalculator(lendingAmount).getResult();
+        return new InternalCalculator(requestedAmount).getResult();
     }
 
     private class InternalCalculator {
@@ -61,15 +78,17 @@ public class LoanCalculator {
             return Loan.builder()
                     .requestedAmount(requestedAmount)
                     .monthlyRepayment(monthlyRepayment)
-                    .totalRepayment(monthlyRepayment.multiply(decimal(REPAYMENTS)))
-                    .rate(calculateEffectiveRate())
+                    .totalRepayment(monthlyRepayment.multiply(decimal(REPAYMENTS))
+                            .setScale(CENT_SCALE, roundingMode()))
+                    .rate(calculateEffectiveAnnualRate())
                     .build();
         }
 
         /**
          * Build compound loan table.
          *
-         * @return Map: rate -> amount.
+         * @param requestedAmount amount requested by a borrower
+         * @return Map: rate -> amount, with sum of values equal to requested amount.
          */
         private Map<BigDecimal, BigDecimal> createLoansMap(BigDecimal requestedAmount) {
             Map<BigDecimal, BigDecimal> map = new HashMap<>();
@@ -95,6 +114,15 @@ public class LoanCalculator {
                     .setScale(Money.CENT_SCALE, Money.roundingMode());
         }
 
+        /**
+         * Calculate monthly repayment having principal amount,
+         * interest rate per repayment period (one month), and number of repayments ({@value #REPAYMENTS}).
+         *
+         * @param principal             principal amount, P
+         * @param monthlyInterestRate   monthly interest rate, Rm
+         * @return {@code Rm * P * r / (r-1)},<br/>
+         * where {@code r = (1+Rm)^N}, N – number of repayments
+         */
         private BigDecimal calculateMonthlyRepayment(BigDecimal principal, BigDecimal monthlyInterestRate) {
             if (monthlyInterestRate.compareTo(BigDecimal.ZERO) == 0) {
                 return principal.divide(decimal(REPAYMENTS), MONEY_CONTEXT);
@@ -105,7 +133,10 @@ public class LoanCalculator {
                     .setScale(CENT_SCALE, roundingMode());
         }
 
-        private BigDecimal calculateEffectiveRate() {
+        /**
+         * Weighted (by amount) average of the rates from the loans table.
+         */
+        private BigDecimal calculateEffectiveAnnualRate() {
             BigDecimal weightedSum = EntryStream.of(loans)
                     .mapKeyValue(BigDecimal::multiply)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -113,6 +144,12 @@ public class LoanCalculator {
                     .setScale(Money.RATE_SCALE, roundingMode());
         }
 
+        /**
+         * Rm = Ry / {@value MONTHS_IN_YEAR}
+         *
+         * @param annualInterestRate annual interest rate
+         * @return Monthly interest rate.
+         */
         private BigDecimal toMonthlyInterestRate(BigDecimal annualInterestRate) {
             return annualInterestRate.divide(decimal(MONTHS_IN_YEAR), MONEY_CONTEXT);
         }

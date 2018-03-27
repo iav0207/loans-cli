@@ -16,10 +16,17 @@ import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.lessThan;
 import static task.loans.core.Money.decimal;
+import static task.loans.core.Money.numericallyEqual;
 import static task.loans.core.Money.rate;
+import static task.loans.core.Money.roundingMode;
 
 @ParametersAreNonnullByDefault
 public class LoanCalculatorTest {
+
+    /**
+     * Worst case relative accuracy of calculations.
+     */
+    private static final BigDecimal EPSILON = BigDecimal.valueOf(1e-3);
 
     @Test
     public void requestedMoreThanSupplied_negativeResult() {
@@ -33,20 +40,6 @@ public class LoanCalculatorTest {
     public void checkResult(List<LendingOffer> offers, Loan expected) {
         Loan actual = new LoanCalculator(offers).calculate(expected.getRequestedAmount());
         softlyAssertEquals(actual, expected);
-    }
-
-    private static void softlyAssertEquals(Loan actual, Loan expected) {
-        SoftAssert softly = new SoftAssert();
-        assertApproximatelyEqual(actual.getRequestedAmount(), expected.getRequestedAmount()).accept(softly);
-        assertApproximatelyEqual(actual.getRate(), expected.getRate()).accept(softly);
-        assertApproximatelyEqual(actual.getTotalRepayment(), expected.getTotalRepayment()).accept(softly);
-        assertApproximatelyEqual(actual.getMonthlyRepayment(), expected.getMonthlyRepayment()).accept(softly);
-        softly.assertAll();
-    }
-
-    private static Consumer<SoftAssert> assertApproximatelyEqual(BigDecimal actual, BigDecimal expected) {
-        return softly -> softly.assertTrue(Money.approximatelyEqual(actual, expected),
-                format("Actual:   %.5f\n\tExpected: %.5f\n", actual, expected));
     }
 
     @DataProvider(name = "calculatorTestCases")
@@ -84,7 +77,42 @@ public class LoanCalculatorTest {
                         .monthlyRepayment("30.88")
                         .totalRepayment("1111.64")
                         .build(),
+                new TestCase("1000")
+                        .offer("0.071", "520")
+                        .offer("0.069", "100")
+                        .offer("0.069", "200")
+                        .offer("0.069", "380")
+                        .rate("0.07")
+                        .monthlyRepayment("30.88")
+                        .totalRepayment("1111.64")
+                        .build(),
         };
+    }
+
+    private static void softlyAssertEquals(Loan actual, Loan expected) {
+        SoftAssert softly = new SoftAssert();
+        assertApproximatelyEqual(actual.getRequestedAmount(), expected.getRequestedAmount()).accept(softly);
+        assertApproximatelyEqual(actual.getRate(), expected.getRate()).accept(softly);
+        assertApproximatelyEqual(actual.getTotalRepayment(), expected.getTotalRepayment()).accept(softly);
+        assertApproximatelyEqual(actual.getMonthlyRepayment(), expected.getMonthlyRepayment()).accept(softly);
+        softly.assertAll();
+    }
+
+    private static Consumer<SoftAssert> assertApproximatelyEqual(BigDecimal actual, BigDecimal expected) {
+        return softly -> softly.assertTrue(approximatelyEqual(actual, expected),
+                format("Actual:   %.5f\n\tExpected: %.5f\n", actual, expected));
+    }
+
+    /**
+     * Epsilon: {@link #EPSILON}
+     */
+    private static boolean approximatelyEqual(BigDecimal a, BigDecimal b) {
+        BigDecimal absSum = a.abs().add(b.abs());
+        if (numericallyEqual(absSum, BigDecimal.ZERO)) {
+            return true;
+        }
+        BigDecimal delta = a.subtract(b).abs().divide(absSum.multiply(decimal(2)), roundingMode());
+        return delta.compareTo(EPSILON) < 0;
     }
 
     private static class TestCase {
