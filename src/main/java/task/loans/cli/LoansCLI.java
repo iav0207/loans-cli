@@ -41,7 +41,8 @@ public class LoansCLI {
         CsvInputReader reader = new CsvInputReader(params.skipLine, params.customSeparator);
         LoanCalculator calculator = new LoanCalculator(reader.read(new File(params.marketFile)));
         Loan result = calculator.calculate(decimal(params.loanAmount));
-        logger.info("{}", new ResultFormatter().format(result));
+        String output = new ResultFormatter().format(result);
+        logger.info(output);
     }
 
 }
