@@ -36,7 +36,7 @@ class Params {
     /**
      * Requested loan amount.
      */
-    @Parameter(required = true, names = {"-a", "--amount"}, description = "Loan amount (decimal)",
+    @Parameter(required = true, names = {"-a", "--amount"}, description = "Loan amount (1_000 : 100 : 15_000)",
             validateWith = LoanAmountValidator.class)
     Integer loanAmount;
 

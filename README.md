@@ -32,7 +32,7 @@ $ loans.sh -h
 Usage: task.loans.cli.LoansCLI [options] Input file (CSV)
   Options:
   * -a, --amount
-      Loan amount (decimal)
+      Loan amount (1_000 : 100 : 15_000)
     -h, --help
       Display this page.
     -l, --line-skip
