@@ -15,13 +15,9 @@ See [example CSV](example/market.csv)
 * The program should provide the borrower with the details
 of the monthly repayment amount and the total repayment amount.
 * Borrowers should be able to request a loan of any £100 increment between £1000 and £15000 inclusive.
+* The interest is compounded monthly.
 * If the market does not have sufficient offers from lenders to satisfy the loan
 then the system should inform the borrower that it is not possible to provide a quote at that time.
-
-### Assumptions
-
-1. The loan is compounded monthly.
-1. Interest rate cannot be negative.
 
 ### Build & Run
 
