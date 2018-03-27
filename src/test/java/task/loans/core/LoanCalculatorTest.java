@@ -1,12 +1,15 @@
 package task.loans.core;
 
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.testng.asserts.SoftAssert;
@@ -15,18 +18,21 @@ import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.lessThan;
+import static task.loans.core.Money.MONEY_CONTEXT;
 import static task.loans.core.Money.decimal;
 import static task.loans.core.Money.numericallyEqual;
 import static task.loans.core.Money.rate;
-import static task.loans.core.Money.roundingMode;
 
 @ParametersAreNonnullByDefault
 public class LoanCalculatorTest {
 
+    private static final Logger logger = LoggerFactory.getLogger(LoanCalculatorTest.class);
+    private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("#0.#####");
+
     /**
      * Worst case relative accuracy of calculations.
      */
-    private static final BigDecimal EPSILON = BigDecimal.valueOf(1e-3);
+    private static final BigDecimal EPSILON = BigDecimal.valueOf(5e-4);
 
     @Test
     public void requestedMoreThanSupplied_negativeResult() {
@@ -51,6 +57,13 @@ public class LoanCalculatorTest {
                         .rate("0.1")
                         .monthlyRepayment("32.27")
                         .totalRepayment("1161.62")
+                        .build(),
+                new TestCase("1500")
+                        .offer("0.2", "2000")
+                        .offer("0.1", "750")
+                        .rate("0.15")
+                        .monthlyRepayment("52.00")
+                        .totalRepayment("1871.89")
                         .build(),
                 new TestCase("3000")
                         .offer("0.1", "2000")
@@ -79,9 +92,9 @@ public class LoanCalculatorTest {
                         .build(),
                 new TestCase("1000")
                         .offer("0.071", "520")
-                        .offer("0.069", "100")
-                        .offer("0.069", "200")
-                        .offer("0.069", "380")
+                        .offer("0.069", "111")
+                        .offer("0.069", "289")
+                        .offer("0.069", "180")
                         .rate("0.07")
                         .monthlyRepayment("30.88")
                         .totalRepayment("1111.64")
@@ -107,12 +120,21 @@ public class LoanCalculatorTest {
      * Epsilon: {@link #EPSILON}
      */
     private static boolean approximatelyEqual(BigDecimal a, BigDecimal b) {
-        BigDecimal absSum = a.abs().add(b.abs());
-        if (numericallyEqual(absSum, BigDecimal.ZERO)) {
+        BigDecimal absAvg = a.abs().add(b.abs()).divide(decimal(2), MONEY_CONTEXT);
+        if (numericallyEqual(absAvg, BigDecimal.ZERO)) {
             return true;
         }
-        BigDecimal delta = a.subtract(b).abs().divide(absSum.multiply(decimal(2)), roundingMode());
+        logger.debug("{} == {}", df(a), df(b));
+        BigDecimal delta = a.subtract(b).abs().divide(absAvg, MONEY_CONTEXT);
+        logger.debug("delta = {}", df(delta));
         return delta.compareTo(EPSILON) < 0;
+    }
+
+    /**
+     * Format decimal value: {@link #DECIMAL_FORMAT}
+     */
+    private static String df(BigDecimal decimal) {
+        return DECIMAL_FORMAT.format(decimal);
     }
 
     private static class TestCase {

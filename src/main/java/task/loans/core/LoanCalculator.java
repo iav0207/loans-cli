@@ -16,6 +16,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static task.loans.core.Money.CENT_SCALE;
 import static task.loans.core.Money.MONEY_CONTEXT;
+import static task.loans.core.Money.RATE_SCALE;
 import static task.loans.core.Money.decimal;
 import static task.loans.core.Money.numericallyEqual;
 import static task.loans.core.Money.roundingMode;
@@ -75,13 +76,14 @@ public class LoanCalculator {
         }
 
         Loan getResult() {
-            BigDecimal monthlyRepayment = getMonthlyRepayment();
+            BigDecimal compoundAnnualRate = calculateEffectiveAnnualRate();
+            BigDecimal monthlyRepayment = getMonthlyRepayment(compoundAnnualRate);
+            BigDecimal totalRepayment = monthlyRepayment.multiply(decimal(REPAYMENTS));
             return Loan.builder()
                     .requestedAmount(requestedAmount)
-                    .monthlyRepayment(monthlyRepayment)
-                    .totalRepayment(monthlyRepayment.multiply(decimal(REPAYMENTS))
-                            .setScale(CENT_SCALE, roundingMode()))
-                    .rate(calculateEffectiveAnnualRate())
+                    .monthlyRepayment(monthlyRepayment.setScale(CENT_SCALE, roundingMode()))
+                    .totalRepayment(totalRepayment.setScale(CENT_SCALE, roundingMode()))
+                    .rate(compoundAnnualRate.setScale(RATE_SCALE, roundingMode()))
                     .build();
         }
 
@@ -107,13 +109,28 @@ public class LoanCalculator {
             return map;
         }
 
-        private BigDecimal getMonthlyRepayment() {
-            return EntryStream.of(loans)
-                    .mapKeys(this::toMonthlyInterestRate)
-                    .invert()
-                    .mapKeyValue(this::calculateMonthlyRepayment)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add)
-                    .setScale(Money.CENT_SCALE, Money.roundingMode());
+        /**
+         * Weighted (by amount) average of the rates from the loans table.
+         */
+        private BigDecimal calculateEffectiveAnnualRate() {
+            BigDecimal weightedSum = EntryStream.of(loans)
+                    .mapKeyValue(BigDecimal::multiply)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            return weightedSum.divide(requestedAmount, MONEY_CONTEXT);
+        }
+
+        private BigDecimal getMonthlyRepayment(BigDecimal annualRate) {
+            return calculateMonthlyRepayment(requestedAmount, toMonthlyInterestRate(annualRate));
+        }
+
+        /**
+         * Rm = Ry / {@value MONTHS_IN_YEAR}
+         *
+         * @param annualInterestRate annual interest rate
+         * @return Monthly interest rate.
+         */
+        private BigDecimal toMonthlyInterestRate(BigDecimal annualInterestRate) {
+            return annualInterestRate.divide(decimal(MONTHS_IN_YEAR), MONEY_CONTEXT);
         }
 
         /**
@@ -131,29 +148,7 @@ public class LoanCalculator {
             }
             BigDecimal r = BigDecimal.ONE.add(monthlyInterestRate).pow(REPAYMENTS);
             return monthlyInterestRate.multiply(principal).multiply(r)
-                    .divide(r.subtract(BigDecimal.ONE), MONEY_CONTEXT)
-                    .setScale(CENT_SCALE, roundingMode());
-        }
-
-        /**
-         * Weighted (by amount) average of the rates from the loans table.
-         */
-        private BigDecimal calculateEffectiveAnnualRate() {
-            BigDecimal weightedSum = EntryStream.of(loans)
-                    .mapKeyValue(BigDecimal::multiply)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            return weightedSum.divide(requestedAmount, roundingMode())
-                    .setScale(Money.RATE_SCALE, roundingMode());
-        }
-
-        /**
-         * Rm = Ry / {@value MONTHS_IN_YEAR}
-         *
-         * @param annualInterestRate annual interest rate
-         * @return Monthly interest rate.
-         */
-        private BigDecimal toMonthlyInterestRate(BigDecimal annualInterestRate) {
-            return annualInterestRate.divide(decimal(MONTHS_IN_YEAR), MONEY_CONTEXT);
+                    .divide(r.subtract(BigDecimal.ONE), MONEY_CONTEXT);
         }
     }
 }
