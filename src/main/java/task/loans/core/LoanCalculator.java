@@ -57,7 +57,7 @@ public class LoanCalculator {
      * or {@link Loan#unavailable} – if the request cannot be satisfied by the market.
      */
     public Loan calculate(BigDecimal requestedAmount) {
-        checkArgument(requestedAmount.compareTo(BigDecimal.ZERO) < 0, "Loan amount must be non-negative");
+        checkArgument(requestedAmount.compareTo(BigDecimal.ZERO) >= 0, "Loan amount must be non-negative");
         if (totalSupply.compareTo(requestedAmount) < 0) {
             return Loan.unavailable(requestedAmount);
         }
