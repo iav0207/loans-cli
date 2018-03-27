@@ -13,6 +13,7 @@ import javax.util.streamex.StreamEx;
 import com.google.common.collect.ImmutableSortedMap;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
 import static task.loans.core.Money.CENT_SCALE;
 import static task.loans.core.Money.MONEY_CONTEXT;
 import static task.loans.core.Money.decimal;
@@ -101,6 +102,7 @@ public class LoanCalculator {
                 if (numericallyEqual(need, BigDecimal.ZERO)) {
                     break;
                 }
+                checkState(need.compareTo(BigDecimal.ZERO) > 0, "Wrong state encountered during calculations");
             }
             return map;
         }
